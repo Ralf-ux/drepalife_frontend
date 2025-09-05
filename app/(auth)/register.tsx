@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
   View,
   Text,
@@ -11,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { UserRole } from '@/types';
 import axios from 'axios';
-
+import { Toast } from 'toastify-react-native';
 export default function RegisterScreen() {
   const { register } = useAuth();
   const params = useLocalSearchParams();
@@ -20,7 +21,7 @@ export default function RegisterScreen() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    email: '',
+    useremail: '',
     password: '',
     confirmPassword: '',
   });
@@ -32,29 +33,30 @@ export default function RegisterScreen() {
       return;
     }
 
-    console.log(formData, 'heloooo', selectedRole);
-    const success = await axios.post(
-      'http://192.168.5.1:3000/api/users/register',
-      {
-        name: formData.firstName,
-        email: formData.email,
-        password: formData.password,
-        role: selectedRole,
-        emergencycontact: '117',
-
-        gender: 'male',
-      }
-    );
-    console.log('response', success);
-    console.log(success.data);
-
-    if (!success) {
-      setError('Registration failed. Please try again.');
-    } else {
-      // Navigation will be handled by AuthContext based on user role
-      setError(
-        success.data.message || 'Registration successful. Please log in.'
+    try {
+      const response = await axios.post(
+        'http://192.168.100.7:3000/api/users/register',
+        {
+          name: formData.firstName,
+          useremail: formData.useremail,
+          password: formData.password,
+          role: selectedRole,
+        }
       );
+
+      if (response.data.success) {
+        Toast.success(response.data.message || 'Registration successful!');
+
+        router.push('/(auth)/login');
+      } else {
+        Toast.error(
+          response.data.message || 'Registration failed. Please try again.'
+        );
+      }
+    } catch (error: any) {
+      console.log(error, 'error');
+
+      Toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -78,8 +80,8 @@ export default function RegisterScreen() {
       <TextInput
         style={styles.input}
         placeholder="Email"
-        value={formData.email}
-        onChangeText={(text) => setFormData({ ...formData, email: text })}
+        value={formData.useremail}
+        onChangeText={(text) => setFormData({ ...formData, useremail: text })}
         keyboardType="email-address"
         autoCapitalize="none"
       />

@@ -1,21 +1,57 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
+import axios from 'axios';
+import ToastManager, { Toast } from 'toastify-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // 👈 toggle state
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    const success = await login(email, password, 'patient');
-    if (!success) {
-      setError('Invalid email or password');
-    } else {
-      router.push('/(tabs)');
+    try {
+      const success = await axios.post(
+        'http://192.168.100.7:3000/api/users/login',
+        { useremail: email, password }
+      );
+      if (success.data.success) {
+        if (success.data.user.role === 'health_expert') {
+          router.push('/(expert)/dashboard');
+        } else if (success.data.user.role === 'patient') {
+          router.push('/(patient)/dashboard');
+        } else if (success.data.user.role === 'admin') {
+          router.push('/(admin)/dashboard');
+        }
+        try {
+          await AsyncStorage.setItem('token', success.data.token);
+          await AsyncStorage.setItem('user', JSON.stringify(success.data.user));
+          console.log(
+            'Token  and user info stored successfully',
+            await AsyncStorage.getItem('user')
+          );
+        } catch (e) {
+          console.log('Failed to save token', e);
+        }
+        Toast.success(success.data.message || 'Login successful!');
+      } else {
+        Toast.error(success.data.message || 'Login failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.log(error, 'login error');
+      Toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -23,7 +59,7 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Login to Drepalife</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      
+
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -32,14 +68,28 @@ export default function LoginScreen() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      
+
+      {/* Password input with eye icon */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.inputPassword}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeIcon}
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <Ionicons
+            name={showPassword ? 'eye-off' : 'eye'}
+            size={22}
+            color="gray"
+          />
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
@@ -47,6 +97,7 @@ export default function LoginScreen() {
       <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
         <Text style={styles.link}>Don't have an account? Register</Text>
       </TouchableOpacity>
+      <ToastManager />
     </View>
   );
 }
@@ -76,6 +127,23 @@ const styles = StyleSheet.create({
     borderColor: Colors.gray300,
     borderRadius: 8,
     marginBottom: Spacing.md,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: Colors.gray300,
+    borderRadius: 8,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+  },
+  inputPassword: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+  },
+  eyeIcon: {
+    paddingHorizontal: Spacing.sm,
   },
   button: {
     backgroundColor: Colors.primary,

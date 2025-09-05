@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { User, AuthState, UserRole } from '@/types';
@@ -34,9 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadStoredAuth = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem('auth_token');
-      const storedUser = await AsyncStorage.getItem('user_data');
-      
+      const storedToken = await AsyncStorage.getItem('token');
+      const storedUser = await AsyncStorage.getItem('user');
+
       if (storedToken && storedUser) {
         const user = JSON.parse(storedUser);
         setAuthState({
@@ -45,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           isAuthenticated: true,
         });
-        
+
         // Navigate to the appropriate dashboard based on the user's role
         if (user.role === 'patient') {
           router.replace('/(patient)/dashboard');
@@ -55,19 +61,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           router.replace('/(admin)/dashboard');
         }
       } else {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
       console.error('Error loading stored auth:', error);
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
-  const login = async (email: string, password: string, role: UserRole): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string,
+    role: UserRole
+  ): Promise<boolean> => {
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const mockUser: User = {
         id: '1',
         email,
@@ -77,19 +87,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verified: true,
         createdAt: new Date().toISOString(),
       };
-      
+
       const mockToken = 'mock_jwt_token_' + Date.now();
-      
+
       await AsyncStorage.setItem('auth_token', mockToken);
       await AsyncStorage.setItem('user_data', JSON.stringify(mockUser));
-      
+
       setAuthState({
         user: mockUser,
         token: mockToken,
         isLoading: false,
         isAuthenticated: true,
       });
-      
+
       // Navigate to the appropriate dashboard based on the user's role
       if (mockUser.role === 'patient') {
         router.replace('/(patient)/dashboard');
@@ -98,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (mockUser.role === 'admin') {
         router.replace('/(admin)/dashboard');
       }
-      
+
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -106,13 +116,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (userData: RegisterData): Promise<boolean> => { 
+  const register = async (userData: RegisterData): Promise<boolean> => {
     // Set isAuthenticated to true for new users
-    setAuthState(prev => ({ ...prev, isAuthenticated: true }));
+    setAuthState((prev) => ({ ...prev, isAuthenticated: true }));
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       const mockUser: User = {
         id: Date.now().toString(),
         email: userData.email,
@@ -122,19 +132,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verified: userData.role !== 'health_expert', // Health experts need approval
         createdAt: new Date().toISOString(),
       };
-      
+
       const mockToken = 'mock_jwt_token_' + Date.now();
-      
+
       await AsyncStorage.setItem('auth_token', mockToken);
       await AsyncStorage.setItem('user_data', JSON.stringify(mockUser));
-      
+
       setAuthState({
         user: mockUser,
         token: mockToken,
         isLoading: false,
         isAuthenticated: true,
       });
-      
+
       // Navigate to the appropriate dashboard based on the user's role
       if (mockUser.role === 'patient') {
         router.replace('/(patient)/dashboard');
@@ -143,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (mockUser.role === 'admin') {
         router.replace('/(admin)/dashboard');
       }
-      
+
       return true;
     } catch (error) {
       console.error('Registration error:', error);
@@ -153,18 +163,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('auth_token');
-      await AsyncStorage.removeItem('user_data');
-      
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+
       setAuthState({
         user: null,
         token: null,
         isLoading: false,
         isAuthenticated: false,
       });
-      
+      console.log('token removed successfully');
+
       // Redirect to landing page after logout
-      router.replace('/');
+      router.replace('/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -173,19 +184,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUser = (userData: Partial<User>) => {
     if (authState.user) {
       const updatedUser = { ...authState.user, ...userData };
-      setAuthState(prev => ({ ...prev, user: updatedUser }));
+      setAuthState((prev) => ({ ...prev, user: updatedUser }));
       AsyncStorage.setItem('user_data', JSON.stringify(updatedUser));
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      ...authState,
-      login,
-      register,
-      logout,
-      updateUser,
-    }}>
+    <AuthContext.Provider
+      value={{
+        ...authState,
+        login,
+        register,
+        logout,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

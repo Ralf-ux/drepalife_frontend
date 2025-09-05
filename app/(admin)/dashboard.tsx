@@ -1,10 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
-import { Users, Shield, Settings, BarChart3, Bell, UserPlus, LogOut, Activity, AlertTriangle, CheckCircle } from 'lucide-react-native';
+
+import {
+  Users,
+  Shield,
+  Settings,
+  BarChart3,
+  Bell,
+  UserPlus,
+  LogOut,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+} from 'lucide-react-native';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -14,21 +33,43 @@ export default function AdminDashboard() {
     totalUsers: 1247,
     activeUsers: 892,
     experts: 45,
-    pendingApprovals: 12
+    pendingApprovals: 12,
   };
 
   const recentActivity = [
-    { id: '1', action: 'New user registration', user: 'Sarah M.', time: '10 min ago', type: 'user' },
-    { id: '2', action: 'Expert account approved', user: 'Dr. Johnson', time: '30 min ago', type: 'approval' },
-    { id: '3', action: 'System backup completed', user: 'System', time: '1 hour ago', type: 'system' }
+    {
+      id: '1',
+      action: 'New user registration',
+      user: 'Sarah M.',
+      time: '10 min ago',
+      type: 'user',
+    },
+    {
+      id: '2',
+      action: 'Expert account approved',
+      user: 'Dr. Johnson',
+      time: '30 min ago',
+      type: 'approval',
+    },
+    {
+      id: '3',
+      action: 'System backup completed',
+      user: 'System',
+      time: '1 hour ago',
+      type: 'system',
+    },
   ];
 
-  const getActivityIcon = (type) => {
+  const getActivityIcon = (type: any) => {
     switch (type) {
-      case 'user': return <UserPlus size={16} color="#3b82f6" />;
-      case 'approval': return <CheckCircle size={16} color="#10b981" />;
-      case 'system': return <Settings size={16} color="#6366f1" />;
-      default: return <Activity size={16} color="#64748b" />;
+      case 'user':
+        return <UserPlus size={16} color="#3b82f6" />;
+      case 'approval':
+        return <CheckCircle size={16} color="#10b981" />;
+      case 'system':
+        return <Settings size={16} color="#6366f1" />;
+      default:
+        return <Activity size={16} color="#64748b" />;
     }
   };
 
@@ -55,11 +96,13 @@ export default function AdminDashboard() {
               </View>
             </View>
           </View>
-          
+
           {systemStats.pendingApprovals > 0 && (
             <View style={styles.alertContainer}>
               <AlertTriangle size={20} color="#fbbf24" />
-              <Text style={styles.alertText}>{systemStats.pendingApprovals} Pending</Text>
+              <Text style={styles.alertText}>
+                {systemStats.pendingApprovals} Pending
+              </Text>
             </View>
           )}
         </View>
@@ -77,7 +120,9 @@ export default function AdminDashboard() {
               <View style={[styles.statIcon, { backgroundColor: '#2563eb' }]}>
                 <Users size={20} color="#ffffff" />
               </View>
-              <Text style={styles.statNumber}>{systemStats.totalUsers.toLocaleString()}</Text>
+              <Text style={styles.statNumber}>
+                {systemStats.totalUsers.toLocaleString()}
+              </Text>
               <Text style={styles.statLabel}>Total Users</Text>
               <View style={styles.statTrend}>
                 <Activity size={12} color="#16a34a" />
@@ -94,7 +139,9 @@ export default function AdminDashboard() {
               <View style={[styles.statIcon, { backgroundColor: '#16a34a' }]}>
                 <UserPlus size={20} color="#ffffff" />
               </View>
-              <Text style={styles.statNumber}>{systemStats.activeUsers.toLocaleString()}</Text>
+              <Text style={styles.statNumber}>
+                {systemStats.activeUsers.toLocaleString()}
+              </Text>
               <Text style={styles.statLabel}>Active Users</Text>
               <View style={styles.statTrend}>
                 <Activity size={12} color="#16a34a" />
@@ -128,7 +175,9 @@ export default function AdminDashboard() {
               <View style={[styles.statIcon, { backgroundColor: '#dc2626' }]}>
                 <AlertTriangle size={20} color="#ffffff" />
               </View>
-              <Text style={styles.statNumber}>{systemStats.pendingApprovals}</Text>
+              <Text style={styles.statNumber}>
+                {systemStats.pendingApprovals}
+              </Text>
               <Text style={styles.statLabel}>Pending Approvals</Text>
               <TouchableOpacity style={styles.urgentBadge}>
                 <Text style={styles.urgentText}>URGENT</Text>
@@ -179,7 +228,9 @@ export default function AdminDashboard() {
               colors={['#e0f2fe', '#f0f9ff']}
               style={styles.managementGradient}
             >
-              <View style={[styles.managementIcon, { backgroundColor: '#0ea5e9' }]}>
+              <View
+                style={[styles.managementIcon, { backgroundColor: '#0ea5e9' }]}
+              >
                 <Users size={20} color="#ffffff" />
               </View>
               <Text style={styles.managementText}>Manage{'\n'}Users</Text>
@@ -191,7 +242,9 @@ export default function AdminDashboard() {
               colors={['#fef3c7', '#fffbeb']}
               style={styles.managementGradient}
             >
-              <View style={[styles.managementIcon, { backgroundColor: '#f59e0b' }]}>
+              <View
+                style={[styles.managementIcon, { backgroundColor: '#f59e0b' }]}
+              >
                 <Shield size={20} color="#ffffff" />
               </View>
               <Text style={styles.managementText}>Expert{'\n'}Approvals</Text>
@@ -203,10 +256,14 @@ export default function AdminDashboard() {
               colors={['#f3e8ff', '#faf5ff']}
               style={styles.managementGradient}
             >
-              <View style={[styles.managementIcon, { backgroundColor: '#8b5cf6' }]}>
+              <View
+                style={[styles.managementIcon, { backgroundColor: '#8b5cf6' }]}
+              >
                 <BarChart3 size={20} color="#ffffff" />
               </View>
-              <Text style={styles.managementText}>Analytics{'\n'}Dashboard</Text>
+              <Text style={styles.managementText}>
+                Analytics{'\n'}Dashboard
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -215,7 +272,12 @@ export default function AdminDashboard() {
               colors={[Colors.primaryLight, '#fecaca']}
               style={styles.managementGradient}
             >
-              <View style={[styles.managementIcon, { backgroundColor: Colors.primary }]}>
+              <View
+                style={[
+                  styles.managementIcon,
+                  { backgroundColor: Colors.primary },
+                ]}
+              >
                 <Settings size={20} color="#ffffff" />
               </View>
               <Text style={styles.managementText}>System{'\n'}Settings</Text>
@@ -252,17 +314,16 @@ export default function AdminDashboard() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient
-        colors={['#bc0f0fff', '#5f0404ff']}
-        style={styles.header}
-      >
+      <LinearGradient colors={['#bc0f0fff', '#5f0404ff']} style={styles.header}>
         <Text style={styles.headerTitle}>Admin Dashboard</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.notificationButton}>
             <Bell size={22} color="#ffffff" />
             {systemStats.pendingApprovals > 0 && (
               <View style={styles.notificationBadge}>
-                <Text style={styles.badgeText}>{systemStats.pendingApprovals}</Text>
+                <Text style={styles.badgeText}>
+                  {systemStats.pendingApprovals}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -273,44 +334,84 @@ export default function AdminDashboard() {
       </LinearGradient>
 
       {/* Content */}
-      <View style={styles.content}>
-        {renderContent()}
-      </View>
+      <View style={styles.content}>{renderContent()}</View>
 
       {/* Modern Tab Bar */}
       <View style={styles.tabBarContainer}>
-        <LinearGradient
-          colors={['#ffffff', '#f8fafc']}
-          style={styles.tabBar}
-        >
-          <TouchableOpacity 
+        <LinearGradient colors={['#ffffff', '#f8fafc']} style={styles.tabBar}>
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'overview' && styles.activeTab]}
             onPress={() => setActiveTab('overview')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'overview' && styles.activeTabIcon]}>
-              <BarChart3 size={18} color={activeTab === 'overview' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'overview' && styles.activeTabIcon,
+              ]}
+            >
+              <BarChart3
+                size={18}
+                color={activeTab === 'overview' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'overview' && styles.activeTabText]}>Overview</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'overview' && styles.activeTabText,
+              ]}
+            >
+              Overview
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'users' && styles.activeTab]}
             onPress={() => setActiveTab('users')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'users' && styles.activeTabIcon]}>
-              <Users size={18} color={activeTab === 'users' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'users' && styles.activeTabIcon,
+              ]}
+            >
+              <Users
+                size={18}
+                color={activeTab === 'users' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'users' && styles.activeTabText]}>Users</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'users' && styles.activeTabText,
+              ]}
+            >
+              Users
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'system' && styles.activeTab]}
             onPress={() => setActiveTab('system')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'system' && styles.activeTabIcon]}>
-              <Settings size={18} color={activeTab === 'system' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'system' && styles.activeTabIcon,
+              ]}
+            >
+              <Settings
+                size={18}
+                color={activeTab === 'system' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'system' && styles.activeTabText]}>System</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'system' && styles.activeTabText,
+              ]}
+            >
+              System
+            </Text>
           </TouchableOpacity>
         </LinearGradient>
       </View>
@@ -323,6 +424,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f1f5f9',
   },
+  activeTab: {},
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -345,6 +447,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     padding: 8,
   },
+
   notificationBadge: {
     position: 'absolute',
     top: 4,

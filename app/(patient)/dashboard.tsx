@@ -1,17 +1,55 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Modal,
+  Alert,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
-import { Stethoscope, MessageCircle, Users, Calendar, Heart, Bell, LogOut, Activity, TrendingUp, X, Check } from 'lucide-react-native';
-
+import {
+  Stethoscope,
+  MessageCircle,
+  Users,
+  Calendar,
+  Heart,
+  Bell,
+  LogOut,
+  Activity,
+  TrendingUp,
+  X,
+  Check,
+} from 'lucide-react-native';
+import { useAuthRedirect } from '../../hooks/authUserRedirect';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function PatientDashboard() {
-  const { user, logout } = useAuth();
+  const { user, loading } = useAuthRedirect();
+
+  // const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+
+      console.log('token removed successfully');
+
+      // Redirect to landing page after logout
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+  // const { logout } = useAuth();
   const symptomsList = [
     'Fever',
     'Cough',
@@ -24,7 +62,10 @@ export default function PatientDashboard() {
   ];
 
   const handleSubmit = () => {
-    Alert.alert("Health Status Submitted", "Your health status has been sent to your health expert.");
+    Alert.alert(
+      'Health Status Submitted',
+      'Your health status has been sent to your health expert.'
+    );
     setModalVisible(false);
   };
 
@@ -44,26 +85,39 @@ export default function PatientDashboard() {
                 key={symptom}
                 style={styles.symptomOption}
                 onPress={() => {
-                  setSelectedSymptoms((prev) => 
-                    prev.includes(symptom) ? prev.filter(s => s !== symptom) : [...prev, symptom]
+                  setSelectedSymptoms((prev) =>
+                    prev.includes(symptom)
+                      ? prev.filter((s) => s !== symptom)
+                      : [...prev, symptom]
                   );
                 }}
               >
                 <Text style={styles.symptomText}>{symptom}</Text>
-                {selectedSymptoms.includes(symptom) && <Check size={20} color={Colors.primary} />}
+                {selectedSymptoms.includes(symptom) && (
+                  <Check size={20} color={Colors.primary} />
+                )}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
               <Text style={styles.submitButtonText}>Done</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
               <X size={20} color={Colors.gray600} />
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-      
-      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+
+      <ScrollView
+        style={styles.tabContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Welcome Section */}
         <LinearGradient
           colors={['#ea6666ff', '#a24b4bff']}
@@ -73,11 +127,17 @@ export default function PatientDashboard() {
         >
           <View style={styles.welcomeContent}>
             <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>{user?.firstName?.charAt(0) || 'P'}</Text>
+              <Text style={styles.avatarText}>
+                {user?.firstName?.charAt(0) || 'P'}
+              </Text>
             </View>
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeTitle}>Welcome back, {user?.firstName}!</Text>
-              <Text style={styles.welcomeSubtitle}>How are you feeling today?</Text>
+              <Text style={styles.welcomeTitle}>
+                Welcome back, {user?.firstName}!
+              </Text>
+              <Text style={styles.welcomeSubtitle}>
+                How are you feeling today?
+              </Text>
             </View>
             <View style={styles.healthScore}>
               <Text style={styles.scoreNumber}>85</Text>
@@ -90,22 +150,30 @@ export default function PatientDashboard() {
         <View style={styles.quickActionsContainer}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
-            <TouchableOpacity 
-              style={[styles.quickActionCard, { backgroundColor: Colors.primaryLight }]}
+            <TouchableOpacity
+              style={[
+                styles.quickActionCard,
+                { backgroundColor: Colors.primaryLight },
+              ]}
               onPress={() => router.push('/(patient)/genotype-test')}
             >
               <LinearGradient
                 colors={[Colors.primaryLight, '#fecaca']}
                 style={styles.quickActionGradient}
               >
-                <View style={[styles.actionIcon, { backgroundColor: Colors.primary }]}>
+                <View
+                  style={[
+                    styles.actionIcon,
+                    { backgroundColor: Colors.primary },
+                  ]}
+                >
                   <Heart size={20} color="#ffffff" />
                 </View>
                 <Text style={styles.quickActionText}>Genotype{'\n'}Test</Text>
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.quickActionCard, { backgroundColor: '#dbeafe' }]}
               onPress={() => router.push('/(patient)/consultation')}
             >
@@ -113,14 +181,18 @@ export default function PatientDashboard() {
                 colors={['#bfdbfe', '#dbeafe']}
                 style={styles.quickActionGradient}
               >
-                <View style={[styles.actionIcon, { backgroundColor: '#2563eb' }]}>
+                <View
+                  style={[styles.actionIcon, { backgroundColor: '#2563eb' }]}
+                >
                   <Stethoscope size={20} color="#ffffff" />
                 </View>
-                <Text style={styles.quickActionText}>Request{'\n'}Consultation</Text>
+                <Text style={styles.quickActionText}>
+                  Request{'\n'}Consultation
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.quickActionCard, { backgroundColor: '#dcfce7' }]}
               onPress={() => router.push('/(patient)/chat')}
             >
@@ -128,14 +200,18 @@ export default function PatientDashboard() {
                 colors={['#bbf7d0', '#dcfce7']}
                 style={styles.quickActionGradient}
               >
-                <View style={[styles.actionIcon, { backgroundColor: '#16a34a' }]}>
+                <View
+                  style={[styles.actionIcon, { backgroundColor: '#16a34a' }]}
+                >
                   <MessageCircle size={20} color="#ffffff" />
                 </View>
-                <Text style={styles.quickActionText}>Chat with{'\n'}Expert</Text>
+                <Text style={styles.quickActionText}>
+                  Chat with{'\n'}Expert
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.quickActionCard, { backgroundColor: '#fef3c7' }]}
               onPress={() => router.push('/(patient)/community')}
             >
@@ -143,7 +219,9 @@ export default function PatientDashboard() {
                 colors={['#fde68a', '#fef3c7']}
                 style={styles.quickActionGradient}
               >
-                <View style={[styles.actionIcon, { backgroundColor: '#d97706' }]}>
+                <View
+                  style={[styles.actionIcon, { backgroundColor: '#d97706' }]}
+                >
                   <Users size={20} color="#ffffff" />
                 </View>
                 <Text style={styles.quickActionText}>Join{'\n'}Community</Text>
@@ -168,11 +246,14 @@ export default function PatientDashboard() {
                   <Text style={styles.statusTitle}>Daily Check-in</Text>
                   <Text style={styles.statusSubtitle}>Track your wellness</Text>
                 </View>
-                <TouchableOpacity style={styles.statusButton} onPress={() => setModalVisible(true)}>
+                <TouchableOpacity
+                  style={styles.statusButton}
+                  onPress={() => setModalVisible(true)}
+                >
                   <Text style={styles.statusButtonText}>Submit</Text>
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.healthMetrics}>
                 <View style={styles.metric}>
                   <Text style={styles.metricValue}>7.2</Text>
@@ -208,7 +289,8 @@ export default function PatientDashboard() {
               <View style={styles.tipContent}>
                 <Text style={styles.tipTitle}>Stay Hydrated</Text>
                 <Text style={styles.tipDescription}>
-                  Drink at least 8 glasses of water daily to maintain good health and prevent sickle cell crises.
+                  Drink at least 8 glasses of water daily to maintain good
+                  health and prevent sickle cell crises.
                 </Text>
               </View>
             </LinearGradient>
@@ -225,7 +307,8 @@ export default function PatientDashboard() {
               <View style={styles.tipContent}>
                 <Text style={styles.tipTitle}>Gentle Exercise</Text>
                 <Text style={styles.tipDescription}>
-                  Light exercise helps improve circulation and overall wellbeing.
+                  Light exercise helps improve circulation and overall
+                  wellbeing.
                 </Text>
               </View>
             </LinearGradient>
@@ -261,61 +344,98 @@ export default function PatientDashboard() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient
-        colors={['#bc0f0fff', '#5f0404ff']}
-        style={styles.header}
-      >
+      <LinearGradient colors={['#bc0f0fff', '#5f0404ff']} style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.notificationButton}>
             <Bell size={22} color="#ffffff" />
             <View style={styles.notificationDot} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <LogOut size={22} color="#ffffff" />
           </TouchableOpacity>
         </View>
       </LinearGradient>
 
       {/* Content */}
-      <View style={styles.content}>
-        {renderContent()}
-      </View>
+      <View style={styles.content}>{renderContent()}</View>
 
       {/* Modern Tab Bar */}
       <View style={styles.tabBarContainer}>
-        <LinearGradient
-          colors={['#ffffff', '#f8fafc']}
-          style={styles.tabBar}
-        >
-          <TouchableOpacity 
+        <LinearGradient colors={['#ffffff', '#f8fafc']} style={styles.tabBar}>
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'overview' && styles.activeTab]}
             onPress={() => setActiveTab('overview')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'overview' && styles.activeTabIcon]}>
-              <Activity size={18} color={activeTab === 'overview' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'overview' && styles.activeTabIcon,
+              ]}
+            >
+              <Activity
+                size={18}
+                color={activeTab === 'overview' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'overview' && styles.activeTabText]}>Overview</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'overview' && styles.activeTabText,
+              ]}
+            >
+              Overview
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'health' && styles.activeTab]}
             onPress={() => setActiveTab('health')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'health' && styles.activeTabIcon]}>
-              <Heart size={18} color={activeTab === 'health' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'health' && styles.activeTabIcon,
+              ]}
+            >
+              <Heart
+                size={18}
+                color={activeTab === 'health' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'health' && styles.activeTabText]}>Health</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'health' && styles.activeTabText,
+              ]}
+            >
+              Health
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'messages' && styles.activeTab]}
             onPress={() => setActiveTab('messages')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'messages' && styles.activeTabIcon]}>
-              <MessageCircle size={18} color={activeTab === 'messages' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'messages' && styles.activeTabIcon,
+              ]}
+            >
+              <MessageCircle
+                size={18}
+                color={activeTab === 'messages' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'messages' && styles.activeTabText]}>Messages</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'messages' && styles.activeTabText,
+              ]}
+            >
+              Messages
+            </Text>
           </TouchableOpacity>
         </LinearGradient>
       </View>

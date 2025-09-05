@@ -7,23 +7,27 @@ export default function RoleSelectionPage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Select Your Role</Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.roleButton}
-        onPress={() => router.push({ pathname: '/(auth)/register', params: { role: 'patient' } })}
+        onPress={() =>
+          router.push({
+            pathname: '/(auth)/register',
+            params: { role: 'patient' },
+          })
+        }
       >
         <Text style={styles.roleText}>Patient</Text>
       </TouchableOpacity>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.roleButton}
-        onPress={() => router.push({ pathname: '/(auth)/register', params: { role: 'health_expert' } })}
+        onPress={() =>
+          router.push({
+            pathname: '/(auth)/register',
+            params: { role: 'health_expert' },
+          })
+        }
       >
         <Text style={styles.roleText}>Health Expert</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.roleButton}
-        onPress={() => router.push({ pathname: '/(auth)/register', params: { role: 'admin' } })}
-      >
-        <Text style={styles.roleText}>Admin</Text>
       </TouchableOpacity>
     </View>
   );

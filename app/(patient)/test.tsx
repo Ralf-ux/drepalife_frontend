@@ -1,147 +1,51 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
   Animated,
+  Linking,
+  Share,
+  Alert,
 } from 'react-native';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
 import { router } from 'expo-router';
-import axios from 'axios';
 import {
-  AlertTriangle,
   ArrowLeft,
-  CheckCircle,
   Dna,
   Download,
-  ExternalLink,
   Play,
+  AlertTriangle,
+  CheckCircle,
+  Users,
+  FileText,
+  ExternalLink,
 } from 'lucide-react-native';
-import { Toast } from 'toastify-react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function GenotypeTestScreen() {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const [patientGenotype, setPatientGenotype] = useState('');
-  const [partnerGenotype, setpartnerGenotype] = useState('');
-  const [result, setResult] = useState('');
-  const [percentageAS, setPercentageAS] = useState(0);
-  const [percentageSS, setPercentageSS] = useState(0);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [resultDatae, setResultData] = useState<null | {
+  const [selectedGenotype, setSelectedGenotype] = useState<string>('');
+  const [partnerGenotype, setPartnerGenotype] = useState<string>('');
+  const [result, setResult] = useState<null | {
     risk: string;
     title: string;
     description: string;
-    percentage: number;
+    percentage: string;
     recommendations: string[];
     nextSteps: string[];
     urgency: string;
     youtubeVideos: { title: string; videoId: string; description: string }[];
   }>(null);
-  useEffect(() => {
-    let isMounted = true;
-
-    const checkLoggedUser = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const userInfo = await AsyncStorage.getItem('user');
-
-        if (!token && isMounted) {
-          router.replace('/(auth)/login');
-        } else if (token && userInfo && isMounted) {
-          setUser(JSON.parse(userInfo));
-        }
-      } catch (error) {
-        console.log('Auth check failed:', error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    checkLoggedUser();
-
-    return () => {
-      isMounted = false; // cleanup
-    };
-  }, []);
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const checkCompatibility = async () => {
-    console.log(patientGenotype, partnerGenotype, 'genotype');
-
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const response = await axios.post(
-        'http://192.168.100.7:3000/api/genotype-matches',
-        { patientGenotype, partnerGenotype },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log(response.data, 'response1');
-
-      if (response.data.success) {
-        setResult(response.data.data.riskMessage);
-        setPercentageAS(response.data.data.childPercentages.AS);
-        setPercentageSS(response.data.data.childPercentages.SS);
-        console.log(percentageAS, 'as', percentageSS, 'percentages');
-
-        const riskKey = getRiskLevel(patientGenotype, partnerGenotype);
-        const resultData = compatibilityData[riskKey];
-        setResultData(resultData);
-
-        Toast.show({
-          type: 'success',
-          text1: response.data.message,
-        });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1:
-            response.data.message ||
-            'Compatibility check failed. Please try again.',
-        });
-      }
-    } catch (error) {
-      console.log(error, 'error');
-      Toast.show({
-        type: 'error',
-        text1: 'An unexpected error occurred. Please try again.',
-      });
-    }
-  };
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
-  const genotypes = ['AA', 'AS', 'SS'];
+  const genotypes: string[] = ['AA', 'AS', 'AC', 'SS', 'SC', 'CC'];
 
   const compatibilityData: Record<
     string,
@@ -149,7 +53,7 @@ export default function GenotypeTestScreen() {
       risk: string;
       title: string;
       description: string;
-      percentage: number;
+      percentage: string;
       recommendations: string[];
       nextSteps: string[];
       urgency: string;
@@ -159,8 +63,8 @@ export default function GenotypeTestScreen() {
     'AA-AA': {
       risk: 'low',
       title: 'Excellent Compatibility',
-      description: result,
-      percentage: Number(percentageAS),
+      description: 'Very low risk of sickle cell disease in offspring',
+      percentage: '0%',
       recommendations: [
         'No special precautions needed',
         'Continue with regular prenatal care',
@@ -188,8 +92,8 @@ export default function GenotypeTestScreen() {
     'AS-AS': {
       risk: 'moderate',
       title: 'Moderate Risk - Genetic Counseling Recommended',
-      description: result,
-      percentage: Number(percentageAS),
+      description: '25% chance of SS offspring with each pregnancy',
+      percentage: '25%',
       recommendations: [
         'Genetic counseling is strongly recommended',
         'Consider prenatal testing during pregnancy',
@@ -214,11 +118,11 @@ export default function GenotypeTestScreen() {
         },
       ],
     },
-    'SS-SS': {
+    SS: {
       risk: 'high',
       title: 'High Risk - Immediate Specialist Consultation Required',
-      description: result,
-      percentage: Number(percentageSS),
+      description: 'Significant risk of sickle cell disease in offspring',
+      percentage: '50-100%',
       recommendations: [
         'URGENT: Consult with hematologist and genetic counselor',
         'Comprehensive family planning consultation needed',
@@ -243,64 +147,6 @@ export default function GenotypeTestScreen() {
         },
       ],
     },
-    'AA-AS': {
-      risk: 'low',
-      title: 'Low Risk - Good Compatibility',
-      description: result,
-      percentage: Number(percentageAS),
-      recommendations: [
-        'No special precautions needed',
-        'Continue with regular prenatal care',
-        'Maintain healthy lifestyle habits',
-      ],
-      nextSteps: [
-        'Schedule regular health checkups',
-        'Consider genetic counseling for complete peace of mind',
-        'Focus on general pregnancy wellness',
-      ],
-      urgency: 'routine',
-      youtubeVideos: [
-        {
-          title: 'What is Sickle Cell Disease?',
-          videoId: '8dHb7Pltu9k',
-          description: 'An overview of sickle cell disease and its genetics',
-        },
-        {
-          title: 'Healthy Pregnancy with Normal Genotypes',
-          videoId: 'WqK6R3nxt0A',
-          description: 'Planning a healthy pregnancy with normal genotypes',
-        },
-      ],
-    },
-    'AA-SS': {
-      risk: 'low',
-      title: 'Low Risk - Good Compatibility',
-      description: result,
-      percentage: Number(percentageAS),
-      recommendations: [
-        'No special precautions needed',
-        'Continue with regular prenatal care',
-        'Maintain healthy lifestyle habits',
-      ],
-      nextSteps: [
-        'Schedule regular health checkups',
-        'Consider genetic counseling for complete peace of mind',
-        'Focus on general pregnancy wellness',
-      ],
-      urgency: 'routine',
-      youtubeVideos: [
-        {
-          title: 'What is Sickle Cell Disease?',
-          videoId: '8dHb7Pltu9k',
-          description: 'An overview of sickle cell disease and its genetics',
-        },
-        {
-          title: 'Healthy Pregnancy with Normal Genotypes',
-          videoId: 'WqK6R3nxt0A',
-          description: 'Planning a healthy pregnancy with normal genotypes',
-        },
-      ],
-    },
   };
 
   const getRiskLevel = (genotype1: string, genotype2: string): string => {
@@ -311,9 +157,43 @@ export default function GenotypeTestScreen() {
       return combination;
     } else if (compatibilityData[reverseCombination]) {
       return reverseCombination;
+    } else if (genotype1 === 'SS' || genotype2 === 'SS') {
+      return 'SS';
     } else {
-      return 'AS-AS';
+      return 'AS-AS'; // Default to moderate risk for other combinations
     }
+  };
+
+  const checkCompatibility = async (): Promise<void> => {
+    setIsLoading(true);
+
+    // Simulate processing time for better UX
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const riskKey = getRiskLevel(selectedGenotype, partnerGenotype);
+    const resultData = compatibilityData[riskKey];
+
+    setResult(resultData);
+    setIsLoading(false);
+
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const getRiskColor = (risk: string): string => {
@@ -342,6 +222,56 @@ export default function GenotypeTestScreen() {
     }
   };
 
+  const openYouTubeVideo = (videoId: string): void => {
+    const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    Linking.openURL(youtubeUrl).catch(() => {
+      Alert.alert('Error', 'Unable to open YouTube video');
+    });
+  };
+
+  const downloadReport = async (): Promise<void> => {
+    if (!result) return;
+
+    const reportContent = `
+GENOTYPE COMPATIBILITY REPORT
+============================
+
+Your Genotype: ${selectedGenotype}
+Partner's Genotype: ${partnerGenotype}
+
+Risk Level: ${result.risk.toUpperCase()}
+Risk Percentage: ${result.percentage}
+
+RECOMMENDATIONS:
+${result.recommendations.map((rec) => `• ${rec}`).join('\n')}
+
+NEXT STEPS:
+${result.nextSteps.map((step) => `• ${step}`).join('\n')}
+
+Generated on: ${new Date().toLocaleDateString()}
+
+This report is for informational purposes only. Please consult with healthcare professionals for medical advice.
+    `;
+
+    try {
+      await Share.share({
+        message: reportContent,
+        title: 'Genotype Compatibility Report',
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Unable to share report');
+    }
+  };
+
+  const resetForm = (): void => {
+    setSelectedGenotype('');
+    setPartnerGenotype('');
+    setResult(null);
+    fadeAnim.setValue(0);
+    slideAnim.setValue(50);
+    scaleAnim.setValue(0.8);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -354,7 +284,7 @@ export default function GenotypeTestScreen() {
         <Text style={styles.headerTitle}>Genotype Compatibility Test</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
           <Dna size={48} color={Colors.primary} style={styles.icon} />
           <Text style={styles.title}>Check Genetic Compatibility</Text>
@@ -371,11 +301,19 @@ export default function GenotypeTestScreen() {
                   key={genotype}
                   style={[
                     styles.genotypeButton,
-                    patientGenotype === genotype && styles.patientGenotype,
+                    selectedGenotype === genotype && styles.selectedGenotype,
                   ]}
-                  onPress={() => setPatientGenotype(genotype)}
+                  onPress={() => setSelectedGenotype(genotype)}
                 >
-                  <Text style={styles.genotypeText}>{genotype}</Text>
+                  <Text
+                    style={[
+                      styles.genotypeText,
+                      selectedGenotype === genotype &&
+                        styles.selectedGenotypeText,
+                    ]}
+                  >
+                    {genotype}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -387,23 +325,43 @@ export default function GenotypeTestScreen() {
                   key={genotype}
                   style={[
                     styles.genotypeButton,
-                    partnerGenotype === genotype && styles.patientGenotype,
+                    partnerGenotype === genotype && styles.selectedGenotype,
                   ]}
-                  onPress={() => setpartnerGenotype(genotype)}
+                  onPress={() => setPartnerGenotype(genotype)}
                 >
-                  <Text style={styles.genotypeText}>{genotype}</Text>
+                  <Text
+                    style={[
+                      styles.genotypeText,
+                      partnerGenotype === genotype &&
+                        styles.selectedGenotypeText,
+                    ]}
+                  >
+                    {genotype}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             <TouchableOpacity
-              style={styles.checkButton}
+              style={[
+                styles.checkButton,
+                (!selectedGenotype || !partnerGenotype || isLoading) &&
+                  styles.disabledButton,
+              ]}
               onPress={checkCompatibility}
-              disabled={!patientGenotype || !partnerGenotype}
+              disabled={!selectedGenotype || !partnerGenotype || isLoading}
             >
-              <Text style={styles.checkButtonText}>Check Compatibility</Text>
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color={Colors.white} />
+                  <Text style={styles.checkButtonText}>Processing...</Text>
+                </View>
+              ) : (
+                <Text style={styles.checkButtonText}>Check Compatibility</Text>
+              )}
             </TouchableOpacity>
-            {resultDatae && (
+
+            {result && (
               <Animated.View
                 style={[
                   styles.resultContainer,
@@ -420,30 +378,28 @@ export default function GenotypeTestScreen() {
                 <View
                   style={[
                     styles.riskHeader,
-                    { backgroundColor: getRiskColor(resultDatae.risk) },
+                    { backgroundColor: getRiskColor(result.risk) },
                   ]}
                 >
-                  {React.createElement(getRiskIcon(resultDatae.risk), {
+                  {React.createElement(getRiskIcon(result.risk), {
                     size: 24,
                     color: Colors.white,
                     style: styles.riskIcon,
                   })}
-                  <Text style={styles.riskTitle}>{resultDatae.title}</Text>
+                  <Text style={styles.riskTitle}>{result.title}</Text>
                 </View>
 
                 {/* Risk Details */}
                 <View style={styles.resultCard}>
                   <View style={styles.riskDetails}>
                     <Text style={styles.riskPercentage}>
-                      {resultDatae.percentage}%
+                      {result.percentage}
                     </Text>
-                    <Text style={styles.riskLabel}>
-                      Risk of AS or SS offspring
-                    </Text>
+                    <Text style={styles.riskLabel}>Risk of SS offspring</Text>
                   </View>
 
                   <Text style={styles.resultDescription}>
-                    {resultDatae.description}
+                    {result.description}
                   </Text>
 
                   {/* Recommendations Section */}
@@ -451,7 +407,7 @@ export default function GenotypeTestScreen() {
                     <Text style={styles.sectionTitle}>
                       Immediate Recommendations
                     </Text>
-                    {resultDatae.recommendations.map((rec, index) => (
+                    {result.recommendations.map((rec, index) => (
                       <View key={index} style={styles.listItem}>
                         <View style={styles.bullet} />
                         <Text style={styles.listText}>{rec}</Text>
@@ -462,7 +418,7 @@ export default function GenotypeTestScreen() {
                   {/* Next Steps Section */}
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Next Steps</Text>
-                    {resultDatae.nextSteps.map((step, index) => (
+                    {result.nextSteps.map((step, index) => (
                       <View key={index} style={styles.listItem}>
                         <Text style={styles.stepNumber}>{index + 1}</Text>
                         <Text style={styles.listText}>{step}</Text>
@@ -475,11 +431,11 @@ export default function GenotypeTestScreen() {
                     <Text style={styles.sectionTitle}>
                       Educational Resources
                     </Text>
-                    {resultDatae.youtubeVideos.map((video, index) => (
+                    {result.youtubeVideos.map((video, index) => (
                       <TouchableOpacity
                         key={index}
                         style={styles.videoCard}
-                        // onPress={() => openYouTubeVideo(video.videoId)}
+                        onPress={() => openYouTubeVideo(video.videoId)}
                       >
                         <Play size={20} color={Colors.primary} />
                         <View style={styles.videoInfo}>
@@ -497,7 +453,7 @@ export default function GenotypeTestScreen() {
                   <View style={styles.actionButtons}>
                     <TouchableOpacity
                       style={styles.downloadButton}
-                      // onPress={downloadReport}
+                      onPress={downloadReport}
                     >
                       <Download size={20} color={Colors.primary} />
                       <Text style={styles.downloadButtonText}>
@@ -507,14 +463,14 @@ export default function GenotypeTestScreen() {
 
                     <TouchableOpacity
                       style={styles.resetButton}
-                      // onPress={resetForm}
+                      onPress={resetForm}
                     >
                       <Text style={styles.resetButtonText}>New Test</Text>
                     </TouchableOpacity>
                   </View>
 
                   {/* Urgency Banner */}
-                  {resultDatae.urgency === 'high' && (
+                  {result.urgency === 'high' && (
                     <View style={styles.urgencyBanner}>
                       <AlertTriangle size={20} color={Colors.white} />
                       <Text style={styles.urgencyText}>
@@ -534,148 +490,15 @@ export default function GenotypeTestScreen() {
           <Text style={styles.infoText}>
             Genotype testing helps identify the risk of passing genetic
             conditions like sickle cell disease to your children. It's
-            recommended for couples planning to start a family.
+            recommended for couples planning to start a family. This tool
+            provides educational information and should not replace professional
+            medical consultation.
           </Text>
         </View>
       </ScrollView>
     </View>
   );
 }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: Colors.gray50,
-//   },
-//   header: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     padding: Spacing.lg,
-//     backgroundColor: Colors.white,
-//     borderBottomWidth: 1,
-//     borderBottomColor: Colors.gray200,
-//   },
-//   backButton: {
-//     marginRight: Spacing.md,
-//   },
-//   headerTitle: {
-//     fontSize: Typography.fontSize.xl,
-//     fontFamily: 'Inter-Bold',
-//     color: Colors.gray800,
-//   },
-//   content: {
-//     flex: 1,
-//     padding: Spacing.lg,
-//   },
-//   card: {
-//     backgroundColor: Colors.white,
-//     padding: Spacing.xl,
-//     borderRadius: 16,
-//     marginBottom: Spacing.lg,
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 4,
-//     elevation: 3,
-//   },
-//   icon: {
-//     alignSelf: 'center',
-//     marginBottom: Spacing.md,
-//   },
-//   title: {
-//     fontSize: Typography.fontSize.xl,
-//     fontFamily: 'Inter-Bold',
-//     color: Colors.gray800,
-//     textAlign: 'center',
-//     marginBottom: Spacing.sm,
-//   },
-//   subtitle: {
-//     fontSize: Typography.fontSize.md,
-//     fontFamily: 'Inter-Regular',
-//     color: Colors.gray600,
-//     textAlign: 'center',
-//     marginBottom: Spacing.xl,
-//   },
-//   resultContainer: {
-//     marginTop: Spacing.lg,
-//   },
-//   form: {
-//     gap: Spacing.lg,
-//   },
-//   label: {
-//     fontSize: Typography.fontSize.md,
-//     fontFamily: 'Inter-SemiBold',
-//     color: Colors.gray700,
-//     marginBottom: Spacing.sm,
-//   },
-//   genotypeGrid: {
-//     flexDirection: 'row',
-//     flexWrap: 'wrap',
-//     gap: Spacing.sm,
-//   },
-//   genotypeButton: {
-//     padding: Spacing.md,
-//     borderRadius: 8,
-//     backgroundColor: Colors.gray100,
-//     minWidth: 60,
-//     alignItems: 'center',
-//   },
-//   patientGenotype: {
-//     backgroundColor: Colors.primary,
-//   },
-//   genotypeText: {
-//     fontSize: Typography.fontSize.md,
-//     fontFamily: 'Inter-SemiBold',
-//     color: Colors.gray700,
-//   },
-//   checkButton: {
-//     backgroundColor: Colors.primary,
-//     padding: Spacing.lg,
-//     borderRadius: 12,
-//     alignItems: 'center',
-//   },
-//   checkButtonText: {
-//     color: Colors.white,
-//     fontSize: Typography.fontSize.md,
-//     fontFamily: 'Inter-SemiBold',
-//   },
-//   resultCard: {
-//     backgroundColor: Colors.gray50,
-//     padding: Spacing.lg,
-//     borderRadius: 12,
-//     borderLeftWidth: 4,
-//     borderLeftColor: Colors.primary,
-//   },
-//   resultTitle: {
-//     fontSize: Typography.fontSize.lg,
-//     fontFamily: 'Inter-Bold',
-//     color: Colors.gray800,
-//     marginBottom: Spacing.sm,
-//   },
-//   resultText: {
-//     fontSize: Typography.fontSize.md,
-//     fontFamily: 'Inter-Regular',
-//     color: Colors.gray600,
-//     lineHeight: Typography.lineHeight.body * Typography.fontSize.md,
-//   },
-//   infoSection: {
-//     backgroundColor: Colors.white,
-//     padding: Spacing.lg,
-//     borderRadius: 12,
-//   },
-//   infoTitle: {
-//     fontSize: Typography.fontSize.lg,
-//     fontFamily: 'Inter-Bold',
-//     color: Colors.gray800,
-//     marginBottom: Spacing.md,
-//   },
-//   infoText: {
-//     fontSize: Typography.fontSize.md,
-//     fontFamily: 'Inter-Regular',
-//     color: Colors.gray600,
-//     lineHeight: Typography.lineHeight.body * Typography.fontSize.md,
-//   },
-// });
 
 const styles = StyleSheet.create({
   container: {
@@ -753,9 +576,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
-  },
-  patientGenotype: {
-    backgroundColor: Colors.primary,
   },
   selectedGenotype: {
     backgroundColor: Colors.primary,

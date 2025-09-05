@@ -1,29 +1,69 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
-import { Stethoscope, MessageCircle, Users, Calendar, FileText, Bell, LogOut, Clock, TrendingUp, Award } from 'lucide-react-native';
+import {
+  Stethoscope,
+  MessageCircle,
+  Users,
+  Calendar,
+  FileText,
+  Bell,
+  LogOut,
+  Clock,
+  TrendingUp,
+  Award,
+} from 'lucide-react-native';
 
 export default function ExpertDashboard() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
   const pendingConsultations = [
-    { id: '1', patient: 'Sarah M.', time: '2:00 PM', date: 'Today', priority: 'high' },
-    { id: '2', patient: 'Michael T.', time: '3:30 PM', date: 'Today', priority: 'medium' },
-    { id: '3', patient: 'Emily R.', time: '10:00 AM', date: 'Tomorrow', priority: 'low' }
+    {
+      id: '1',
+      patient: 'Sarah M.',
+      time: '2:00 PM',
+      date: 'Today',
+      priority: 'high',
+    },
+    {
+      id: '2',
+      patient: 'Michael T.',
+      time: '3:30 PM',
+      date: 'Today',
+      priority: 'medium',
+    },
+    {
+      id: '3',
+      patient: 'Emily R.',
+      time: '10:00 AM',
+      date: 'Tomorrow',
+      priority: 'low',
+    },
   ];
 
   const unreadMessages = 5;
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: any) => {
     switch (priority) {
-      case 'high': return Colors.primary;
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#6b7280';
+      case 'high':
+        return Colors.primary;
+      case 'medium':
+        return '#f59e0b';
+      case 'low':
+        return '#10b981';
+      default:
+        return '#6b7280';
     }
   };
 
@@ -125,7 +165,10 @@ export default function ExpertDashboard() {
         </View>
 
         {pendingConsultations.map((consultation) => (
-          <TouchableOpacity key={consultation.id} style={styles.consultationCard}>
+          <TouchableOpacity
+            key={consultation.id}
+            style={styles.consultationCard}
+          >
             <LinearGradient
               colors={['#ffffff', '#f8fafc']}
               style={styles.consultationGradient}
@@ -146,10 +189,23 @@ export default function ExpertDashboard() {
                   </View>
                 </View>
               </View>
-              
+
               <View style={styles.consultationRight}>
-                <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(consultation.priority) + '20' }]}>
-                  <Text style={[styles.priorityText, { color: getPriorityColor(consultation.priority) }]}>
+                <View
+                  style={[
+                    styles.priorityBadge,
+                    {
+                      backgroundColor:
+                        getPriorityColor(consultation.priority) + '20',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.priorityText,
+                      { color: getPriorityColor(consultation.priority) },
+                    ]}
+                  >
                     {consultation.priority.toUpperCase()}
                   </Text>
                 </View>
@@ -193,7 +249,9 @@ export default function ExpertDashboard() {
               colors={[Colors.primaryLight, '#fecaca']}
               style={styles.quickActionGradient}
             >
-              <View style={[styles.actionIcon, { backgroundColor: Colors.primary }]}>
+              <View
+                style={[styles.actionIcon, { backgroundColor: Colors.primary }]}
+              >
                 <FileText size={20} color="#ffffff" />
               </View>
               <Text style={styles.quickActionText}>Medical{'\n'}Reports</Text>
@@ -242,10 +300,7 @@ export default function ExpertDashboard() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient
-        colors={['#6c0000ff', '#d00303ff']}
-        style={styles.header}
-      >
+      <LinearGradient colors={['#6c0000ff', '#d00303ff']} style={styles.header}>
         <Text style={styles.headerTitle}>Expert Dashboard</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.notificationButton}>
@@ -263,44 +318,84 @@ export default function ExpertDashboard() {
       </LinearGradient>
 
       {/* Content */}
-      <View style={styles.content}>
-        {renderContent()}
-      </View>
+      <View style={styles.content}>{renderContent()}</View>
 
       {/* Modern Tab Bar */}
       <View style={styles.tabBarContainer}>
-        <LinearGradient
-          colors={['#ffffff', '#f8fafc']}
-          style={styles.tabBar}
-        >
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'overview' && styles.activeTab]}
+        <LinearGradient colors={['#ffffff', '#f8fafc']} style={styles.tabBar}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'overview' && styles.container]}
             onPress={() => setActiveTab('overview')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'overview' && styles.activeTabIcon]}>
-              <TrendingUp size={18} color={activeTab === 'overview' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'overview' && styles.activeTabIcon,
+              ]}
+            >
+              <TrendingUp
+                size={18}
+                color={activeTab === 'overview' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'overview' && styles.activeTabText]}>Overview</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'overview' && styles.activeTabText,
+              ]}
+            >
+              Overview
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'patients' && styles.activeTab]}
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'patients' && styles.container]}
             onPress={() => setActiveTab('patients')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'patients' && styles.activeTabIcon]}>
-              <Users size={18} color={activeTab === 'patients' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'patients' && styles.activeTabIcon,
+              ]}
+            >
+              <Users
+                size={18}
+                color={activeTab === 'patients' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'patients' && styles.activeTabText]}>Patients</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'patients' && styles.activeTabText,
+              ]}
+            >
+              Patients
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'reports' && styles.activeTab]}
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'reports' && styles.container]}
             onPress={() => setActiveTab('reports')}
           >
-            <View style={[styles.tabIconContainer, activeTab === 'reports' && styles.activeTabIcon]}>
-              <FileText size={18} color={activeTab === 'reports' ? '#ffffff' : '#64748b'} />
+            <View
+              style={[
+                styles.tabIconContainer,
+                activeTab === 'reports' && styles.activeTabIcon,
+              ]}
+            >
+              <FileText
+                size={18}
+                color={activeTab === 'reports' ? '#ffffff' : '#64748b'}
+              />
             </View>
-            <Text style={[styles.tabText, activeTab === 'reports' && styles.activeTabText]}>Reports</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'reports' && styles.activeTabText,
+              ]}
+            >
+              Reports
+            </Text>
           </TouchableOpacity>
         </LinearGradient>
       </View>

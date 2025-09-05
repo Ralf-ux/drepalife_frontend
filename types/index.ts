@@ -9,7 +9,7 @@ export interface User {
   createdAt: string;
 }
 
-export type UserRole = 'patient' | 'health_expert' | 'admin';
+export type UserRole = 'patient' | 'health_expert' | 'admin' | 'visitor';
 
 export interface AuthState {
   user: User | null;
