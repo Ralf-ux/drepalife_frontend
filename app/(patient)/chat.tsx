@@ -1,14 +1,29 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
 import { router } from 'expo-router';
-import { ArrowLeft, Send, User } from 'lucide-react-native';
+import { AppWindow, ArrowLeft, Send, User } from 'lucide-react-native';
 import axios from 'axios';
+import { BASE_URL } from '@/constants/config';
 
 export default function ChatScreen() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([
-    { id: '1', text: 'Hello! How can I help you today?', sender: 'expert', timestamp: '10:00 AM' },
+    {
+      id: '1',
+      text: 'Hello! How can I help you today?',
+      sender: 'expert',
+      timestamp: '10:00 AM',
+    },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -19,17 +34,22 @@ export default function ChatScreen() {
         id: Date.now().toString(),
         text: message,
         sender: 'patient',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
       };
 
-      setMessages(prev => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage]);
       setMessage('');
       setIsLoading(true);
 
       try {
         console.log('Sending message to backend:', message);
-        const response = await axios.post('http://localhost:3000/consult', {
-          symptoms: message
+
+       
+        const response = await axios.post(`${BASE_URL}/consult`, {
+          symptoms: message,
         });
 
         console.log('Received response from backend:', response.data);
@@ -38,19 +58,27 @@ export default function ChatScreen() {
           id: (Date.now() + 1).toString(),
           text: response.data.advice,
           sender: 'expert',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
         };
 
-        setMessages(prev => [...prev, aiMessage]);
+        setMessages((prev) => [...prev, aiMessage]);
       } catch (error) {
         console.error('Error sending message:', error);
+
         const errorMessage = {
           id: (Date.now() + 1).toString(),
           text: 'Sorry, I encountered an error. Please try again.',
           sender: 'expert',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
         };
-        setMessages(prev => [...prev, errorMessage]);
+
+        setMessages((prev) => [...prev, errorMessage]);
       } finally {
         setIsLoading(false);
       }
@@ -58,7 +86,7 @@ export default function ChatScreen() {
   };
 
   useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
+  
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
     }
@@ -67,11 +95,17 @@ export default function ChatScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <ArrowLeft size={24} color={Colors.primary} />
         </TouchableOpacity>
         <View style={styles.expertInfo}>
-          <Image source={require('@/assets/images/drepa.png')} style={styles.logo} />
+          <Image
+            source={require('@/assets/images/drepa.png')}
+            style={styles.logo}
+          />
           <Text style={styles.botName}>Drepa Bot</Text>
         </View>
       </View>
@@ -82,7 +116,9 @@ export default function ChatScreen() {
             key={msg.id}
             style={[
               styles.messageBubble,
-              msg.sender === 'patient' ? styles.patientMessage : styles.expertMessage
+              msg.sender === 'patient'
+                ? styles.patientMessage
+                : styles.expertMessage,
             ]}
           >
             <Text style={styles.messageText}>{msg.text}</Text>

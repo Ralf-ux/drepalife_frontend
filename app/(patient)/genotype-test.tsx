@@ -37,7 +37,9 @@ export default function GenotypeTestScreen() {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  const cardAnimations = useRef(Array.from({ length: 5 }, () => new Animated.Value(0))).current;
+  const cardAnimations = useRef(
+    Array.from({ length: 5 }, () => new Animated.Value(0))
+  ).current;
 
   // State variables
   const [patientGenotype, setPatientGenotype] = useState('');
@@ -153,6 +155,7 @@ export default function GenotypeTestScreen() {
     setIsChecking(true);
 
     try {
+      console.log('hello i entered and left');
       const token = await AsyncStorage.getItem('token');
       const response = await axios.post(
         `${BASE_URL}/api/genotype-matches`,
@@ -164,12 +167,12 @@ export default function GenotypeTestScreen() {
           },
         }
       );
-
+      console.log('hello i entered');
       if (response.data.success) {
         const newResult = response.data.data.riskMessage;
         const newPercentageAS = response.data.data.childPercentages.AS || 0;
         const newPercentageSS = response.data.data.childPercentages.SS || 0;
-        
+
         // Update state immediately and consistently
         setResult(newResult);
         setPercentageAS(newPercentageAS);
@@ -177,17 +180,17 @@ export default function GenotypeTestScreen() {
 
         const riskKey = getRiskLevel(patientGenotype, partnerGenotype);
         const resultData = { ...compatibilityData[riskKey] };
-        
+
         // Update description with actual result
         resultData.description = newResult;
-        
+
         // Set dynamic percentage based on the combination
         if (riskKey === 'SS-SS') {
           resultData.percentage = newPercentageSS;
         } else {
           resultData.percentage = newPercentageAS;
         }
-        
+
         setResultData(resultData);
         animateCards();
 
@@ -198,7 +201,9 @@ export default function GenotypeTestScreen() {
       } else {
         Toast.show({
           type: 'error',
-          text1: response.data.message || 'Compatibility check failed. Please try again.',
+          text1:
+            response.data.message ||
+            'Compatibility check failed. Please try again.',
         });
       }
     } catch (error) {
@@ -238,12 +243,14 @@ export default function GenotypeTestScreen() {
         {
           title: 'Understanding Sickle Cell Disease Genetics',
           videoId: 'yqIkUMnlQSc',
-          description: 'Comprehensive overview of sickle cell genetics and inheritance patterns',
+          description:
+            'Comprehensive overview of sickle cell genetics and inheritance patterns',
         },
         {
           title: 'Healthy Family Planning Guide',
           videoId: '3bQv6k7KQ-4',
-          description: 'Essential guide to planning a healthy family with genetic considerations',
+          description:
+            'Essential guide to planning a healthy family with genetic considerations',
         },
       ],
     },
@@ -269,12 +276,14 @@ export default function GenotypeTestScreen() {
         {
           title: 'Genetic Counseling for Sickle Cell Carriers',
           videoId: 'M8hH7POiSso',
-          description: 'What to expect during genetic counseling for AS carriers',
+          description:
+            'What to expect during genetic counseling for AS carriers',
         },
         {
           title: 'Prenatal Testing Options',
           videoId: 'KfzqB7Bp_rE',
-          description: 'Understanding CVS, amniocentesis, and other prenatal tests',
+          description:
+            'Understanding CVS, amniocentesis, and other prenatal tests',
         },
       ],
     },
@@ -305,7 +314,8 @@ export default function GenotypeTestScreen() {
         {
           title: 'Family Planning with Genetic Conditions',
           videoId: 'dHfZfNzgEhA',
-          description: 'Reproductive options for couples with genetic conditions',
+          description:
+            'Reproductive options for couples with genetic conditions',
         },
       ],
     },
@@ -362,7 +372,8 @@ export default function GenotypeTestScreen() {
         {
           title: 'Supporting Partners with Sickle Cell',
           videoId: 'sB4kPgV2Q4E',
-          description: 'How to support a partner living with sickle cell disease',
+          description:
+            'How to support a partner living with sickle cell disease',
         },
         {
           title: 'Genetic Inheritance Patterns',
@@ -416,7 +427,7 @@ export default function GenotypeTestScreen() {
     const urls = [
       `vnd.youtube://${videoId}`,
       `https://www.youtube.com/watch?v=${videoId}`,
-      `https://m.youtube.com/watch?v=${videoId}`
+      `https://m.youtube.com/watch?v=${videoId}`,
     ];
 
     for (const url of urls) {
@@ -476,7 +487,9 @@ MEDICAL RECOMMENDATIONS
 =======================
 Based on your genetic compatibility results, the following recommendations are provided:
 
-${resultData.recommendations.map((rec, index) => `${index + 1}. ${rec}`).join('\n')}
+${resultData.recommendations
+  .map((rec, index) => `${index + 1}. ${rec}`)
+  .join('\n')}
 
 IMMEDIATE NEXT STEPS
 ===================
@@ -484,7 +497,13 @@ ${resultData.nextSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
 
 GENETIC COUNSELING INFORMATION
 ==============================
-Genetic counseling is ${resultData.risk === 'high' ? 'URGENTLY' : resultData.risk === 'moderate' ? 'STRONGLY' : ''} recommended.
+Genetic counseling is ${
+        resultData.risk === 'high'
+          ? 'URGENTLY'
+          : resultData.risk === 'moderate'
+          ? 'STRONGLY'
+          : ''
+      } recommended.
 
 Key points to discuss with your genetic counselor:
 - Family history of sickle cell disease
@@ -495,11 +514,14 @@ Key points to discuss with your genetic counselor:
 EDUCATIONAL RESOURCES
 =====================
 Recommended educational videos:
-${resultData.youtubeVideos.map((video, index) => 
-`${index + 1}. ${video.title}
+${resultData.youtubeVideos
+  .map(
+    (video, index) =>
+      `${index + 1}. ${video.title}
    Description: ${video.description}
    Link: https://www.youtube.com/watch?v=${video.videoId}`
-).join('\n\n')}
+  )
+  .join('\n\n')}
 
 IMPORTANT DISCLAIMERS
 ====================
@@ -516,11 +538,13 @@ HIGH RISK: Significant chance of affected children, specialist consultation urge
 
 FOLLOW-UP RECOMMENDATIONS
 =========================
-${resultData.urgency === 'high' ? 
-'URGENT: Schedule specialist consultation within 1 week' :
-resultData.urgency === 'moderate' ?
-'Schedule genetic counseling within 2-4 weeks' :
-'Routine follow-up with healthcare provider as needed'}
+${
+  resultData.urgency === 'high'
+    ? 'URGENT: Schedule specialist consultation within 1 week'
+    : resultData.urgency === 'moderate'
+    ? 'Schedule genetic counseling within 2-4 weeks'
+    : 'Routine follow-up with healthcare provider as needed'
+}
 
 For questions or concerns, please contact your healthcare provider.
 
@@ -530,7 +554,7 @@ Report generated by Drepalife Digital Health Platform
 
       const fileName = `Genotype_Compatibility_Report_${patientGenotype}_${partnerGenotype}_${Date.now()}.txt`;
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-      
+
       await FileSystem.writeAsStringAsync(fileUri, reportContent);
 
       if (Platform.OS === 'ios') {
@@ -566,10 +590,10 @@ Report generated by Drepalife Digital Health Platform
     setResultData(null);
     setPercentageAS(0);
     setPercentageSS(0);
-    
+
     // Reset animations
-    cardAnimations.forEach(anim => anim.setValue(0));
-    
+    cardAnimations.forEach((anim) => anim.setValue(0));
+
     Toast.show({
       type: 'info',
       text1: 'Form reset successfully',
@@ -594,21 +618,26 @@ Report generated by Drepalife Digital Health Platform
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View style={[styles.card, {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
-        }]}>
-          <Animated.View style={{
-            transform: [
-              { scale: pulseAnim },
-              { rotate: rotateInterpolate }
-            ]
-          }}>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+            },
+          ]}
+        >
+          <Animated.View
+            style={{
+              transform: [{ scale: pulseAnim }, { rotate: rotateInterpolate }],
+            }}
+          >
             <Dna size={48} color={Colors.primary} style={styles.icon} />
           </Animated.View>
           <Text style={styles.title}>Check Genetic Compatibility</Text>
           <Text style={styles.subtitle}>
-            Understand the genetic risks for sickle cell disease in potential offspring
+            Understand the genetic risks for sickle cell disease in potential
+            offspring
           </Text>
 
           <View style={styles.form}>
@@ -623,10 +652,13 @@ Report generated by Drepalife Digital Health Platform
                   ]}
                   onPress={() => setPatientGenotype(genotype)}
                 >
-                  <Text style={[
-                    styles.genotypeText,
-                    patientGenotype === genotype && styles.selectedGenotypeText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.genotypeText,
+                      patientGenotype === genotype &&
+                        styles.selectedGenotypeText,
+                    ]}
+                  >
                     {genotype}
                   </Text>
                 </TouchableOpacity>
@@ -644,10 +676,13 @@ Report generated by Drepalife Digital Health Platform
                   ]}
                   onPress={() => setPartnerGenotype(genotype)}
                 >
-                  <Text style={[
-                    styles.genotypeText,
-                    partnerGenotype === genotype && styles.selectedGenotypeText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.genotypeText,
+                      partnerGenotype === genotype &&
+                        styles.selectedGenotypeText,
+                    ]}
+                  >
                     {genotype}
                   </Text>
                 </TouchableOpacity>
@@ -657,14 +692,17 @@ Report generated by Drepalife Digital Health Platform
             <TouchableOpacity
               style={[
                 styles.checkButton,
-                (!patientGenotype || !partnerGenotype || isChecking) && styles.disabledButton
+                (!patientGenotype || !partnerGenotype || isChecking) &&
+                  styles.disabledButton,
               ]}
               onPress={checkCompatibility}
               disabled={!patientGenotype || !partnerGenotype || isChecking}
             >
               <View style={styles.loadingContainer}>
                 <Text style={styles.checkButtonText}>
-                  {isChecking ? 'Checking Compatibility...' : 'Check Compatibility'}
+                  {isChecking
+                    ? 'Checking Compatibility...'
+                    : 'Check Compatibility'}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -697,10 +735,12 @@ Report generated by Drepalife Digital Health Platform
                 </View>
 
                 <View style={styles.resultCard}>
-                  <Animated.View style={[
-                    styles.riskDetails,
-                    { transform: [{ scale: cardAnimations[0] }] }
-                  ]}>
+                  <Animated.View
+                    style={[
+                      styles.riskDetails,
+                      { transform: [{ scale: cardAnimations[0] }] },
+                    ]}
+                  >
                     <Text style={styles.riskPercentage}>
                       {resultData.percentage}%
                     </Text>
@@ -713,10 +753,12 @@ Report generated by Drepalife Digital Health Platform
                     {resultData.description}
                   </Text>
 
-                  <Animated.View style={[
-                    styles.section,
-                    { transform: [{ scale: cardAnimations[1] }] }
-                  ]}>
+                  <Animated.View
+                    style={[
+                      styles.section,
+                      { transform: [{ scale: cardAnimations[1] }] },
+                    ]}
+                  >
                     <Text style={styles.sectionTitle}>
                       Immediate Recommendations
                     </Text>
@@ -728,10 +770,12 @@ Report generated by Drepalife Digital Health Platform
                     ))}
                   </Animated.View>
 
-                  <Animated.View style={[
-                    styles.section,
-                    { transform: [{ scale: cardAnimations[2] }] }
-                  ]}>
+                  <Animated.View
+                    style={[
+                      styles.section,
+                      { transform: [{ scale: cardAnimations[2] }] },
+                    ]}
+                  >
                     <Text style={styles.sectionTitle}>Next Steps</Text>
                     {resultData.nextSteps.map((step, index) => (
                       <View key={index} style={styles.listItem}>
@@ -741,10 +785,12 @@ Report generated by Drepalife Digital Health Platform
                     ))}
                   </Animated.View>
 
-                  <Animated.View style={[
-                    styles.section,
-                    { transform: [{ scale: cardAnimations[3] }] }
-                  ]}>
+                  <Animated.View
+                    style={[
+                      styles.section,
+                      { transform: [{ scale: cardAnimations[3] }] },
+                    ]}
+                  >
                     <Text style={styles.sectionTitle}>
                       Educational Resources
                     </Text>
@@ -766,10 +812,12 @@ Report generated by Drepalife Digital Health Platform
                     ))}
                   </Animated.View>
 
-                  <Animated.View style={[
-                    styles.actionButtons,
-                    { transform: [{ scale: cardAnimations[4] }] }
-                  ]}>
+                  <Animated.View
+                    style={[
+                      styles.actionButtons,
+                      { transform: [{ scale: cardAnimations[4] }] },
+                    ]}
+                  >
                     <TouchableOpacity
                       style={styles.downloadButton}
                       onPress={generateComprehensiveReport}
@@ -777,7 +825,9 @@ Report generated by Drepalife Digital Health Platform
                     >
                       <FileText size={20} color={Colors.primary} />
                       <Text style={styles.downloadButtonText}>
-                        {isGeneratingReport ? 'Generating...' : 'Download Report'}
+                        {isGeneratingReport
+                          ? 'Generating...'
+                          : 'Download Report'}
                       </Text>
                     </TouchableOpacity>
 
@@ -793,7 +843,8 @@ Report generated by Drepalife Digital Health Platform
                     <View style={styles.urgencyBanner}>
                       <AlertTriangle size={20} color="#FFFFFF" />
                       <Text style={styles.urgencyText}>
-                        Time-sensitive: Schedule specialist consultation within 1 week
+                        Time-sensitive: Schedule specialist consultation within
+                        1 week
                       </Text>
                     </View>
                   )}
@@ -806,8 +857,10 @@ Report generated by Drepalife Digital Health Platform
         <View style={styles.infoSection}>
           <Text style={styles.infoTitle}>About Genotype Testing</Text>
           <Text style={styles.infoText}>
-            Genotype testing helps identify the risk of passing genetic conditions like sickle cell disease to your children. 
-            This comprehensive analysis provides personalized recommendations and next steps based on your specific genetic combination.
+            Genotype testing helps identify the risk of passing genetic
+            conditions like sickle cell disease to your children. This
+            comprehensive analysis provides personalized recommendations and
+            next steps based on your specific genetic combination.
           </Text>
         </View>
       </ScrollView>

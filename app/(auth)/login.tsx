@@ -27,10 +27,10 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      const success = await axios.post(
-        `${BASE_URL}/api/users/login`,
-        { useremail: email, password }
-      );
+      const success = await axios.post(`${BASE_URL}/api/users/login`, {
+        useremail: email,
+        password,
+      });
       if (success.data.success) {
         if (success.data.user.role === 'health_expert') {
           router.push('/(expert)/dashboard');
@@ -96,7 +96,11 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
         {isLoading ? (
           <ActivityIndicator size="small" color={Colors.white} />
         ) : (
