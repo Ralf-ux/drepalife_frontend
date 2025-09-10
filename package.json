@@ -47,7 +47,8 @@
     "react-native-vector-icons": "^10.3.0",
     "react-native-web": "^0.20.0",
     "react-native-webview": "^13.16.0",
-    "toastify-react-native": "^7.2.3"
+    "toastify-react-native": "^7.2.3",
+    "expo-sharing": "~13.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

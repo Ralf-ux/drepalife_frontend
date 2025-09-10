@@ -6,8 +6,10 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { BASE_URL } from '@/constants/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { UserRole } from '@/types';
@@ -26,6 +28,7 @@ export default function RegisterScreen() {
     confirmPassword: '',
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
     if (formData.password !== formData.confirmPassword) {
@@ -33,9 +36,10 @@ export default function RegisterScreen() {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post(
-        'http://192.168.100.7:3000/api/users/register',
+        `${BASE_URL}/api/users/register`,
         {
           name: formData.firstName,
           useremail: formData.useremail,
@@ -45,7 +49,7 @@ export default function RegisterScreen() {
       );
 
       if (response.data.success) {
-        Toast.success(response.data.message || 'Registration successful!');
+        Toast.success(`Welcome back ${response.data.user.name}!`);
 
         router.push('/(auth)/login');
       } else {
@@ -57,6 +61,8 @@ export default function RegisterScreen() {
       console.log(error, 'error');
 
       Toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -102,8 +108,12 @@ export default function RegisterScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Create Account</Text>
+      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={isLoading}>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={Colors.white} />
+        ) : (
+          <Text style={styles.buttonText}>Create Account</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push('/(auth)/login')}>

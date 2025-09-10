@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
@@ -22,11 +23,21 @@ import {
   Clock,
   TrendingUp,
   Award,
+  Heart,
 } from 'lucide-react-native';
+import HealthTipsModal from '@/components/HealthTipsModal';
 
 export default function ExpertDashboard() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [refreshing, setRefreshing] = useState(false);
+  const [healthTipsModalVisible, setHealthTipsModalVisible] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate refresh - in real app, refetch data here
+    setTimeout(() => setRefreshing(false), 2000);
+  };
 
   const pendingConsultations = [
     {
@@ -68,7 +79,13 @@ export default function ExpertDashboard() {
   };
 
   const renderOverview = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.tabContent}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       {/* Welcome Section */}
       <LinearGradient
         colors={['#bc0f0fff', '#5f0404ff']}
@@ -82,7 +99,7 @@ export default function ExpertDashboard() {
               <Text style={styles.avatarText}>Dr</Text>
             </View>
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeTitle}>Dr. {user?.lastName}</Text>
+              <Text style={styles.welcomeTitle}>Dr. {user?.name || `${user?.firstName} ${user?.lastName}` || 'Expert'}</Text>
               <Text style={styles.welcomeSubtitle}>Sickle Cell Specialist</Text>
               <View style={styles.statusBadge}>
                 <View style={styles.statusDot} />
@@ -269,6 +286,21 @@ export default function ExpertDashboard() {
               <Text style={styles.quickActionText}>Patient{'\n'}Records</Text>
             </LinearGradient>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            onPress={() => setHealthTipsModalVisible(true)}
+          >
+            <LinearGradient
+              colors={['#fef2f2', '#fef2f2']}
+              style={styles.quickActionGradient}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: '#dc2626' }]}>
+                <Heart size={20} color="#ffffff" />
+              </View>
+              <Text style={styles.quickActionText}>Health{'\n'}Tips</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -399,6 +431,12 @@ export default function ExpertDashboard() {
           </TouchableOpacity>
         </LinearGradient>
       </View>
+
+      {/* Health Tips Modal */}
+      <HealthTipsModal
+        visible={healthTipsModalVisible}
+        onClose={() => setHealthTipsModalVisible(false)}
+      />
     </View>
   );
 }

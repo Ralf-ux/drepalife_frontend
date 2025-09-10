@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   Modal,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
@@ -28,6 +29,10 @@ import {
 } from 'lucide-react-native';
 import { useAuthRedirect } from '../../hooks/authUserRedirect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import FloatingChatButton from '../../components/FloatingChatButton';
+import axios from 'axios';
+import { BASE_URL } from '@/constants/config';
+import { HealthTip } from '@/types';
 export default function PatientDashboard() {
   const { user, loading } = useAuthRedirect();
 
@@ -35,6 +40,15 @@ export default function PatientDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [healthTips, setHealthTips] = useState<HealthTip[]>([]);
+  const [tipsLoading, setTipsLoading] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate refresh - in real app, refetch data here
+    setTimeout(() => setRefreshing(false), 2000);
+  };
 
   const handleLogout = async () => {
     try {
@@ -68,6 +82,23 @@ export default function PatientDashboard() {
     );
     setModalVisible(false);
   };
+
+  const fetchHealthTips = async () => {
+    try {
+      setTipsLoading(true);
+      const response = await axios.get(`${BASE_URL}/health-tips`);
+      setHealthTips(response.data);
+    } catch (error) {
+      console.error('Failed to fetch health tips:', error);
+      Alert.alert('Error', 'Failed to load health tips');
+    } finally {
+      setTipsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHealthTips();
+  }, []);
 
   const renderOverview = () => (
     <>
@@ -117,6 +148,9 @@ export default function PatientDashboard() {
       <ScrollView
         style={styles.tabContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Welcome Section */}
         <LinearGradient
@@ -128,12 +162,12 @@ export default function PatientDashboard() {
           <View style={styles.welcomeContent}>
             <View style={styles.avatarContainer}>
               <Text style={styles.avatarText}>
-                {user?.firstName?.charAt(0) || 'P'}
+                {user?.name?.charAt(0) || user?.firstName?.charAt(0) || 'P'}
               </Text>
             </View>
             <View style={styles.welcomeTextContainer}>
               <Text style={styles.welcomeTitle}>
-                Welcome back, {user?.firstName}!
+                Welcome back, {user?.name || `${user?.firstName} ${user?.lastName}` || 'User'}!
               </Text>
               <Text style={styles.welcomeSubtitle}>
                 How are you feeling today?
@@ -278,41 +312,38 @@ export default function PatientDashboard() {
             <Text style={styles.sectionTitle}>Health Tips</Text>
             <TrendingUp size={20} color="#10b981" />
           </View>
-          <View style={styles.tipCard}>
-            <LinearGradient
-              colors={['#ecfdf5', '#f0fdf4']}
-              style={styles.tipGradient}
-            >
-              <View style={styles.tipIconContainer}>
-                <Text style={styles.tipEmoji}>💧</Text>
-              </View>
-              <View style={styles.tipContent}>
-                <Text style={styles.tipTitle}>Stay Hydrated</Text>
-                <Text style={styles.tipDescription}>
-                  Drink at least 8 glasses of water daily to maintain good
-                  health and prevent sickle cell crises.
-                </Text>
-              </View>
-            </LinearGradient>
+        {tipsLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading health tips...</Text>
           </View>
-
-          <View style={styles.tipCard}>
-            <LinearGradient
-              colors={['#fef7ff', '#faf5ff']}
-              style={styles.tipGradient}
-            >
-              <View style={styles.tipIconContainer}>
-                <Text style={styles.tipEmoji}>🏃‍♀️</Text>
-              </View>
-              <View style={styles.tipContent}>
-                <Text style={styles.tipTitle}>Gentle Exercise</Text>
-                <Text style={styles.tipDescription}>
-                  Light exercise helps improve circulation and overall
-                  wellbeing.
-                </Text>
-              </View>
-            </LinearGradient>
+        ) : healthTips.length > 0 ? (
+          healthTips.map((tip, index) => (
+            <View key={tip._id || index} style={styles.tipCard}>
+              <LinearGradient
+                colors={
+                  index % 2 === 0
+                    ? ['#ecfdf5', '#f0fdf4']
+                    : ['#fef7ff', '#faf5ff']
+                }
+                style={styles.tipGradient}
+              >
+                <View style={styles.tipIconContainer}>
+                  <Text style={styles.tipEmoji}>
+                    {index % 2 === 0 ? '💧' : '🏃‍♀️'}
+                  </Text>
+                </View>
+                <View style={styles.tipContent}>
+                  <Text style={styles.tipTitle}>{tip.title}</Text>
+                  <Text style={styles.tipDescription}>{tip.content}</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          ))
+        ) : (
+          <View style={styles.noTipsContainer}>
+            <Text style={styles.noTipsText}>No health tips available</Text>
           </View>
+        )}
         </View>
       </ScrollView>
     </>
@@ -388,7 +419,8 @@ export default function PatientDashboard() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* Removed Health and Messages tab buttons as per user request */}
+          {/* <TouchableOpacity
             style={[styles.tab, activeTab === 'health' && styles.activeTab]}
             onPress={() => setActiveTab('health')}
           >
@@ -436,9 +468,12 @@ export default function PatientDashboard() {
             >
               Messages
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </LinearGradient>
       </View>
+
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
     </View>
   );
 }
@@ -773,5 +808,23 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     marginTop: 8,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748b',
+  },
+  noTipsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  noTipsText: {
+    fontSize: 16,
+    color: '#64748b',
   },
 });

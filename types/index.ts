@@ -2,8 +2,9 @@ export interface User {
   id: string;
   email: string;
   role: UserRole;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
   avatar?: string;
   verified: boolean;
   createdAt: string;
@@ -58,4 +59,12 @@ export interface HealthMetric {
   unit: string;
   date: string;
   patientId: string;
+}
+
+export interface HealthTip {
+  _id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }

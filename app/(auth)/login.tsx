@@ -5,9 +5,11 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
+import { BASE_URL } from '@/constants/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 import axios from 'axios';
@@ -20,11 +22,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false); // 👈 toggle state
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
+    setIsLoading(true);
     try {
       const success = await axios.post(
-        'http://192.168.100.7:3000/api/users/login',
+        `${BASE_URL}/api/users/login`,
         { useremail: email, password }
       );
       if (success.data.success) {
@@ -52,6 +56,8 @@ export default function LoginScreen() {
     } catch (error: any) {
       console.log(error, 'login error');
       Toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -90,8 +96,12 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={Colors.white} />
+        ) : (
+          <Text style={styles.buttonText}>Login</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push('/(auth)/register')}>

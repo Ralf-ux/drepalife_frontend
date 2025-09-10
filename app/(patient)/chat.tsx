@@ -1,27 +1,68 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
 import { router } from 'expo-router';
 import { ArrowLeft, Send, User } from 'lucide-react-native';
+import axios from 'axios';
 
 export default function ChatScreen() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([
     { id: '1', text: 'Hello! How can I help you today?', sender: 'expert', timestamp: '10:00 AM' },
-    { id: '2', text: 'I have some questions about my recent test results.', sender: 'patient', timestamp: '10:01 AM' },
   ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  const sendMessage = () => {
-    if (message.trim()) {
-      setMessages([...messages, { 
-        id: Date.now().toString(), 
-        text: message, 
-        sender: 'patient', 
+  const sendMessage = async () => {
+    if (message.trim() && !isLoading) {
+      const userMessage = {
+        id: Date.now().toString(),
+        text: message,
+        sender: 'patient',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
+      };
+
+      setMessages(prev => [...prev, userMessage]);
       setMessage('');
+      setIsLoading(true);
+
+      try {
+        console.log('Sending message to backend:', message);
+        const response = await axios.post('http://localhost:3000/consult', {
+          symptoms: message
+        });
+
+        console.log('Received response from backend:', response.data);
+
+        const aiMessage = {
+          id: (Date.now() + 1).toString(),
+          text: response.data.advice,
+          sender: 'expert',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        const errorMessage = {
+          id: (Date.now() + 1).toString(),
+          text: 'Sorry, I encountered an error. Please try again.',
+          sender: 'expert',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
+
+  useEffect(() => {
+    // Auto-scroll to bottom when new messages arrive
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
 
   return (
     <View style={styles.container}>
@@ -30,11 +71,8 @@ export default function ChatScreen() {
           <ArrowLeft size={24} color={Colors.primary} />
         </TouchableOpacity>
         <View style={styles.expertInfo}>
-          <User size={32} color={Colors.primary} />
-          <View>
-            <Text style={styles.expertName}>Dr. Sarah Johnson</Text>
-            <Text style={styles.expertStatus}>Online</Text>
-          </View>
+          <Image source={require('@/assets/images/drepa.png')} style={styles.logo} />
+          <Text style={styles.botName}>Drepa Bot</Text>
         </View>
       </View>
 
@@ -90,17 +128,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  expertName: {
+  logo: {
+    width: 32,
+    height: 32,
+    marginRight: Spacing.sm,
+  },
+  botName: {
     fontSize: Typography.fontSize.lg,
     fontFamily: 'Inter-SemiBold',
     color: Colors.gray800,
-    marginLeft: Spacing.md,
-  },
-  expertStatus: {
-    fontSize: Typography.fontSize.sm,
-    fontFamily: 'Inter-Regular',
-    color: Colors.green,
-    marginLeft: Spacing.md,
   },
   messagesContainer: {
     flex: 1,
