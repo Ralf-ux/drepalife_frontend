@@ -240,7 +240,7 @@ export default function PatientDashboard() {
                   <MessageCircle size={20} color="#ffffff" />
                 </View>
                 <Text style={styles.quickActionText}>
-                  Chat with{'\n'}Expert
+                  Chat with{'\n'}Drepa AI Bot
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -261,6 +261,52 @@ export default function PatientDashboard() {
                 <Text style={styles.quickActionText}>Join{'\n'}Community</Text>
               </LinearGradient>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Chat with Health Expert Section */}
+        <View style={styles.expertChatContainer}>
+          <Text style={styles.sectionTitle}>Chat with Health Expert</Text>
+          <View style={styles.expertChatCard}>
+            <LinearGradient
+              colors={['#fef7ff', '#faf5ff']}
+              style={styles.expertChatGradient}
+            >
+              <View style={styles.expertChatHeader}>
+                <View style={styles.expertIconContainer}>
+                  <Text style={styles.expertEmoji}>👨‍⚕️</Text>
+                </View>
+                <View style={styles.expertInfo}>
+                  <Text style={styles.expertTitle}>Connect with Human Experts</Text>
+                  <Text style={styles.expertSubtitle}>
+                    Get personalized advice from certified healthcare professionals
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.expertFeatures}>
+                <View style={styles.expertFeature}>
+                  <Text style={styles.featureIcon}>💬</Text>
+                  <Text style={styles.featureText}>24/7 Support</Text>
+                </View>
+                <View style={styles.expertFeature}>
+                  <Text style={styles.featureIcon}>🎯</Text>
+                  <Text style={styles.featureText}>Specialized Care</Text>
+                </View>
+                <View style={styles.expertFeature}>
+                  <Text style={styles.featureIcon}>🔒</Text>
+                  <Text style={styles.featureText}>Secure & Private</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.expertChatButton}
+                onPress={() => router.push('/(patient)/expert-chat')}
+              >
+                <Text style={styles.expertChatButtonText}>Start Expert Chat</Text>
+                <MessageCircle size={18} color="#ffffff" />
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </View>
 
@@ -826,5 +872,84 @@ const styles = StyleSheet.create({
   noTipsText: {
     fontSize: 16,
     color: '#64748b',
+  },
+  expertChatContainer: {
+    marginVertical: 20,
+  },
+  expertChatCard: {
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  expertChatGradient: {
+    padding: 20,
+  },
+  expertChatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  expertIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(138, 43, 226, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  expertEmoji: {
+    fontSize: 24,
+  },
+  expertInfo: {
+    flex: 1,
+  },
+  expertTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  expertSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 20,
+  },
+  expertFeatures: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  expertFeature: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  featureIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  featureText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#64748b',
+    textAlign: 'center',
+  },
+  expertChatButton: {
+    backgroundColor: '#8b5cf6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 10,
+    gap: 8,
+  },
+  expertChatButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

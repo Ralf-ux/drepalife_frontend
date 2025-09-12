@@ -7,7 +7,6 @@ import {
   ScrollView,
   Animated,
   Linking,
-  Alert,
   Platform,
 } from 'react-native';
 import { Colors, Spacing, Typography } from '@/constants/Colors';
@@ -19,16 +18,33 @@ import {
   ArrowLeft,
   CheckCircle,
   Dna,
-  Download,
   ExternalLink,
   Play,
   FileText,
-  Share2,
 } from 'lucide-react-native';
 import { Toast } from 'toastify-react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+type CompatibilityDataType = {
+  [key: string]: {
+    risk: string;
+    title: string;
+    description: string;
+    percentage: number;
+    recommendations: string[];
+    nextSteps: string[];
+    urgency: string;
+    youtubeVideos: { title: string; videoId: string; description: string; }[];
+  };
+};
+
+type UserType = {
+  name: string;
+} | null;
+
+type GenotypeKey = 'AA-AA' | 'AS-AS' | 'SS-SS' | 'AA-AS' | 'AA-SS';
 
 export default function GenotypeTestScreen() {
   // Animation refs
@@ -47,11 +63,11 @@ export default function GenotypeTestScreen() {
   const [result, setResult] = useState('');
   const [percentageAS, setPercentageAS] = useState(0);
   const [percentageSS, setPercentageSS] = useState(0);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<UserType>(null);
   const [loading, setLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [resultData, setResultData] = useState(null);
+  const [resultData, setResultData] = useState<CompatibilityDataType[string] | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -155,8 +171,12 @@ export default function GenotypeTestScreen() {
     setIsChecking(true);
 
     try {
-      console.log('hello i entered and left');
       const token = await AsyncStorage.getItem('token');
+      console.log('Token exists:', !!token);
+      console.log('BASE_URL:', BASE_URL);
+      console.log('Full URL:', `${BASE_URL}/api/genotype-matches`);
+      console.log('Request data:', { patientGenotype, partnerGenotype });
+
       const response = await axios.post(
         `${BASE_URL}/api/genotype-matches`,
         { patientGenotype, partnerGenotype },
@@ -167,7 +187,9 @@ export default function GenotypeTestScreen() {
           },
         }
       );
-      console.log('hello i entered');
+
+      console.log('Response received:', response.data);
+
       if (response.data.success) {
         const newResult = response.data.data.riskMessage;
         const newPercentageAS = response.data.data.childPercentages.AS || 0;
@@ -184,12 +206,8 @@ export default function GenotypeTestScreen() {
         // Update description with actual result
         resultData.description = newResult;
 
-        // Set dynamic percentage based on the combination
-        if (riskKey === 'SS-SS') {
-          resultData.percentage = newPercentageSS;
-        } else {
-          resultData.percentage = newPercentageAS;
-        }
+        // Set percentage to risk of SS (sickle cell disease) offspring
+        resultData.percentage = newPercentageSS;
 
         setResultData(resultData);
         animateCards();
@@ -207,11 +225,55 @@ export default function GenotypeTestScreen() {
         });
       }
     } catch (error) {
-      console.log(error, 'error');
-      Toast.show({
-        type: 'error',
-        text1: 'An unexpected error occurred. Please try again.',
-      });
+      console.error('Compatibility check error:', error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // Server responded with error status
+          console.error('Response data:', error.response.data);
+          console.error('Response status:', error.response.status);
+
+          // Handle authentication errors
+          if (error.response.status === 401 || error.response.status === 403) {
+            Toast.show({
+              type: 'error',
+              text1: 'Session expired',
+              text2: 'Please log in again',
+            });
+
+            // Clear invalid token and user data, then redirect to login
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('user');
+            router.replace('/(auth)/login');
+            return;
+          }
+
+          Toast.show({
+            type: 'error',
+            text1: error.response.data?.message || 'Server error occurred',
+          });
+        } else if (error.request) {
+          // Request was made but no response received
+          console.error('No response received:', error.request);
+          Toast.show({
+            type: 'error',
+            text1: 'Network error - please check your connection',
+          });
+        } else {
+          // Something else happened
+          console.error('Request setup error:', error.message);
+          Toast.show({
+            type: 'error',
+            text1: 'Request failed - please try again',
+          });
+        }
+      } else {
+        console.error('Non-axios error:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'An unexpected error occurred. Please try again.',
+        });
+      }
     } finally {
       setIsChecking(false);
     }
@@ -219,8 +281,8 @@ export default function GenotypeTestScreen() {
 
   const genotypes = ['AA', 'AS', 'SS'];
 
-  // Updated videos with working YouTube IDs
-  const compatibilityData = {
+  // Updated videos with the provided YouTube IDs
+  const compatibilityData: CompatibilityDataType = {
     'AA-AA': {
       risk: 'low',
       title: 'Excellent Compatibility',
@@ -242,13 +304,13 @@ export default function GenotypeTestScreen() {
       youtubeVideos: [
         {
           title: 'Understanding Sickle Cell Disease Genetics',
-          videoId: 'yqIkUMnlQSc',
+          videoId: 'NtMRgWL-VZs',
           description:
             'Comprehensive overview of sickle cell genetics and inheritance patterns',
         },
         {
           title: 'Healthy Family Planning Guide',
-          videoId: '3bQv6k7KQ-4',
+          videoId: '_KwsCYDKcho',
           description:
             'Essential guide to planning a healthy family with genetic considerations',
         },
@@ -274,16 +336,15 @@ export default function GenotypeTestScreen() {
       urgency: 'moderate',
       youtubeVideos: [
         {
-          title: 'Genetic Counseling for Sickle Cell Carriers',
-          videoId: 'M8hH7POiSso',
-          description:
-            'What to expect during genetic counseling for AS carriers',
+          title: 'Sickle Cell Trait vs Disease',
+          videoId: '9l86ZPkDuXk',
+          description: 'Understanding the difference between trait and disease',
         },
         {
-          title: 'Prenatal Testing Options',
-          videoId: 'KfzqB7Bp_rE',
+          title: 'Genetic Counseling for Sickle Cell Carriers',
+          videoId: 'kOzOha3hduI',
           description:
-            'Understanding CVS, amniocentesis, and other prenatal tests',
+            'What to expect during genetic counseling for AS carriers',
         },
       ],
     },
@@ -308,12 +369,12 @@ export default function GenotypeTestScreen() {
       youtubeVideos: [
         {
           title: 'Living with Sickle Cell Disease',
-          videoId: 'sB4kPgV2Q4E',
+          videoId: 'yCOvkOCaaSk',
           description: 'Comprehensive guide to managing sickle cell disease',
         },
         {
           title: 'Family Planning with Genetic Conditions',
-          videoId: 'dHfZfNzgEhA',
+          videoId: 'J40EE1zYtEI',
           description:
             'Reproductive options for couples with genetic conditions',
         },
@@ -340,12 +401,12 @@ export default function GenotypeTestScreen() {
       youtubeVideos: [
         {
           title: 'Sickle Cell Trait vs Disease',
-          videoId: 'yqIkUMnlQSc',
+          videoId: '9l86ZPkDuXk',
           description: 'Understanding the difference between trait and disease',
         },
         {
           title: 'Healthy Pregnancy Planning',
-          videoId: '3bQv6k7KQ-4',
+          videoId: '7lpmHDCYFd0',
           description: 'Essential tips for planning a healthy pregnancy',
         },
       ],
@@ -370,23 +431,22 @@ export default function GenotypeTestScreen() {
       urgency: 'routine',
       youtubeVideos: [
         {
-          title: 'Supporting Partners with Sickle Cell',
-          videoId: 'sB4kPgV2Q4E',
-          description:
-            'How to support a partner living with sickle cell disease',
+          title: 'Prenatal Testing Options',
+          videoId: 'MhWpmZIsZxw',
+          description: 'Understanding prenatal testing options available',
         },
         {
-          title: 'Genetic Inheritance Patterns',
-          videoId: 'M8hH7POiSso',
+          title: 'Genetic Counseling for Sickle Cell Carriers',
+          videoId: 'kOzOha3hduI',
           description: 'Understanding how genetic traits are inherited',
         },
       ],
     },
   };
 
-  const getRiskLevel = (genotype1, genotype2) => {
-    const combination = `${genotype1}-${genotype2}`;
-    const reverseCombination = `${genotype2}-${genotype1}`;
+  const getRiskLevel = (genotype1: string, genotype2: string): GenotypeKey => {
+    const combination = `${genotype1}-${genotype2}` as GenotypeKey;
+    const reverseCombination = `${genotype2}-${genotype1}` as GenotypeKey;
 
     if (compatibilityData[combination]) {
       return combination;
@@ -397,7 +457,7 @@ export default function GenotypeTestScreen() {
     }
   };
 
-  const getRiskColor = (risk) => {
+  const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'low':
         return '#10B981';
@@ -410,7 +470,7 @@ export default function GenotypeTestScreen() {
     }
   };
 
-  const getRiskIcon = (risk) => {
+  const getRiskIcon = (risk: string) => {
     switch (risk) {
       case 'low':
         return CheckCircle;
@@ -423,7 +483,7 @@ export default function GenotypeTestScreen() {
     }
   };
 
-  const openYouTubeVideo = async (videoId) => {
+  const openYouTubeVideo = async (videoId: string) => {
     const urls = [
       `vnd.youtube://${videoId}`,
       `https://www.youtube.com/watch?v=${videoId}`,
@@ -745,7 +805,7 @@ Report generated by Drepalife Digital Health Platform
                       {resultData.percentage}%
                     </Text>
                     <Text style={styles.riskLabel}>
-                      Risk of AS or SS offspring
+                      Risk of SS offspring
                     </Text>
                   </Animated.View>
 
@@ -762,7 +822,7 @@ Report generated by Drepalife Digital Health Platform
                     <Text style={styles.sectionTitle}>
                       Immediate Recommendations
                     </Text>
-                    {resultData.recommendations.map((rec, index) => (
+                    {resultData.recommendations.map((rec: string, index: number) => (
                       <View key={index} style={styles.listItem}>
                         <View style={styles.bullet} />
                         <Text style={styles.listText}>{rec}</Text>
@@ -777,7 +837,7 @@ Report generated by Drepalife Digital Health Platform
                     ]}
                   >
                     <Text style={styles.sectionTitle}>Next Steps</Text>
-                    {resultData.nextSteps.map((step, index) => (
+                    {resultData.nextSteps.map((step: string, index: number) => (
                       <View key={index} style={styles.listItem}>
                         <Text style={styles.stepNumber}>{index + 1}</Text>
                         <Text style={styles.listText}>{step}</Text>

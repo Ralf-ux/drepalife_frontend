@@ -3,6 +3,9 @@ import { Animated, TouchableOpacity, StyleSheet, ActivityIndicator } from "react
 import { MessageCircle } from "lucide-react-native";
 import { router } from "expo-router";
 import axios from "axios";
+import { BASE_URL } from "../constants/config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Toast } from "toastify-react-native";
 
 const FloatingChatButton = () => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -23,11 +26,25 @@ const FloatingChatButton = () => {
     setLoading(true);
     console.log("Floating chat button pressed");
     try {
+      const token = await AsyncStorage.getItem('token');
+      console.log('Token exists:', !!token);
+      console.log('BASE_URL:', BASE_URL);
+      console.log('Full URL:', `${BASE_URL}/consult`);
+
       console.log("Making API call to backend...");
       // Example first API "hello" message
-      const response = await axios.post("http://localhost:3000/consult", {
-        symptoms: "Hello doctor, I would like to start a consultation.",
-      });
+      const response = await axios.post(
+        `${BASE_URL}/consult`,
+        {
+          symptoms: "Hello doctor, I would like to start a consultation.",
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       console.log("API response received:", response.data);
 
       // Navigate to chat page
@@ -37,6 +54,51 @@ const FloatingChatButton = () => {
     } catch (err) {
       console.error("Error starting chat:", (err as Error).message);
       console.error("Full error:", err);
+
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          console.error('Response data:', err.response.data);
+          console.error('Response status:', err.response.status);
+
+          // Handle authentication errors
+          if (err.response.status === 401 || err.response.status === 403) {
+            Toast.show({
+              type: 'error',
+              text1: 'Session expired',
+              text2: 'Please log in again',
+            });
+
+            // Clear invalid token and user data, then redirect to login
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('user');
+            router.replace('/(auth)/login');
+            return;
+          }
+
+          Toast.show({
+            type: 'error',
+            text1: err.response.data?.message || 'Failed to start consultation',
+          });
+        } else if (err.request) {
+          console.error('No response received:', err.request);
+          Toast.show({
+            type: 'error',
+            text1: 'Network error - please check your connection',
+          });
+        } else {
+          console.error('Request setup error:', err.message);
+          Toast.show({
+            type: 'error',
+            text1: 'Request failed - please try again',
+          });
+        }
+      } else {
+        console.error('Non-axios error:', err);
+        Toast.show({
+          type: 'error',
+          text1: 'An unexpected error occurred. Please try again.',
+        });
+      }
     } finally {
       setLoading(false);
     }
